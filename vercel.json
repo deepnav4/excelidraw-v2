@@ -2,6 +2,5 @@
   "buildCommand": "npm install -g pnpm && cd ../.. && pnpm install && pnpm turbo build --filter=web",
   "outputDirectory": ".next",
   "installCommand": "echo 'Skipping default install'",
-  "framework": null,
-  "ignoreCommand": "git diff --quiet 'HEAD^' HEAD . 2>/dev/null || exit 1"
+  "framework": null
 }

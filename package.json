@@ -1,0 +1,26 @@
+{
+  "name": "excelidraw",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "db:generate": "cd packages/database && prisma generate",
+    "db:push": "cd packages/database && prisma db push",
+    "db:migrate": "cd packages/database && prisma migrate dev",
+    "web:dev": "cd apps/web && pnpm dev",
+    "http:dev": "cd apps/http-backend && pnpm dev",
+    "ws:dev": "cd apps/ws-backend && pnpm dev",
+    "kafka:dev": "cd apps/kafka-consumer && pnpm dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.1",
+    "typescript": "^5.7.3",
+    "prettier": "^3.5.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18"
+  }
+}

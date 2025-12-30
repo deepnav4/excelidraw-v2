@@ -1,4 +1,6 @@
 {
-  "buildCommand": "pnpm install && pnpm run build",
+  "buildCommand": "pnpm turbo build --filter=web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install --frozen-lockfile",
   "ignoreCommand": "git diff --quiet 'HEAD^' HEAD ./apps/web 2>/dev/null || exit 1"
 }

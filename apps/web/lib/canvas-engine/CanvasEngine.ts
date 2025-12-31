@@ -915,8 +915,10 @@ export class CanvasEngine {
     
     // Offset the pasted shape slightly so it's visible
     const offset = 20;
-    newShape.x += offset;
-    newShape.y += offset;
+    if ('x' in newShape && 'y' in newShape) {
+      newShape.x += offset;
+      newShape.y += offset;
+    }
     
     // Add the new shape
     this.shapes.push(newShape);
@@ -924,7 +926,10 @@ export class CanvasEngine {
     this.render();
     
     // Select the newly pasted shape
-    this.selectShape(newShape.id);
+    this.selectedShapeId = newShape.id;
+    if (this.onSelectionChange) {
+      this.onSelectionChange(deepCloneShape(newShape));
+    }
     
     if (this.onShapeCountChange) {
       this.onShapeCountChange(this.shapes.length);

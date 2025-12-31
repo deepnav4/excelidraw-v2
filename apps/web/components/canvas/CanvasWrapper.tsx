@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CanvasEngine } from "@/lib/canvas-engine/CanvasEngine";
 import type { ToolType, Shape } from "@repo/common";
 import { TopToolbar } from "./TopToolbar";
 import Sidebar from "./Sidebar";
 import { Minus, Plus } from "lucide-react";
-import { getAdaptiveColors } from "@/lib/utils";
 
 export function CanvasWrapper() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,11 +38,6 @@ export function CanvasWrapper() {
     return '#ffffff';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Calculate adaptive colors based on canvas background
-  const adaptiveColors = useMemo(() => {
-    return getAdaptiveColors(canvasBg);
-  }, [canvasBg]);
 
   // Persist colors to localStorage
   useEffect(() => {
@@ -135,6 +129,11 @@ export function CanvasWrapper() {
   const handleStrokeWidthChange = (width: number) => {
     setStrokeWidth(width);
     engineRef.current?.setStrokeWidth(width as any);
+    
+    // If a shape is selected, update it
+    if (selectedShape) {
+      engineRef.current?.updateSelectedShapeStrokeWidth(width as any);
+    }
   };
 
   const handleZoomIn = () => {
@@ -181,6 +180,14 @@ export function CanvasWrapper() {
     engineRef.current?.updateSelectedShapeOpacity(opacity);
   };
 
+  const handleCopy = () => {
+    engineRef.current?.copySelectedShape();
+  };
+
+  const handlePaste = () => {
+    engineRef.current?.pasteShape();
+  };
+
   return (
     <div className="h-screen w-full flex flex-col" style={{ backgroundColor: canvasBg }}>
       <TopToolbar 
@@ -193,8 +200,9 @@ export function CanvasWrapper() {
         canRedo={canRedo}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}
-        adaptiveColors={adaptiveColors}
-        shapeCount={shapeCount}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        hasSelection={!!selectedShape}
       />
       
       <div className="flex-1 flex overflow-hidden relative">
@@ -219,7 +227,6 @@ export function CanvasWrapper() {
             onStrokeStyleChange={handleStrokeStyleChange}
             onOpacityChange={handleOpacityChange}
             hasSelection={!!selectedShape}
-            adaptiveColors={adaptiveColors}
           />
         </div>
         
@@ -231,41 +238,32 @@ export function CanvasWrapper() {
           />
           
           {/* Zoom Controls */}
-          <div 
-            className="absolute bottom-6 left-6 flex items-center gap-1 backdrop-blur-sm shadow-lg rounded-xl p-1.5 z-10"
-            style={{ 
-              backgroundColor: adaptiveColors.toolbarBg,
-              borderColor: adaptiveColors.borderColor,
-              borderWidth: '1px',
-              borderStyle: 'solid'
-            }}
-          >
+          <div className="absolute bottom-6 left-6 flex items-center gap-1 bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 rounded-xl p-1.5 z-10">
             <button
               onClick={handleZoomOut}
-              className="p-2 hover:bg-black/5 rounded-lg transition-all duration-200"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200"
               title="Zoom Out"
             >
-              <Minus className="w-4 h-4" style={{ color: adaptiveColors.textColor }} />
+              <Minus className="w-4 h-4 text-gray-600" />
             </button>
             <button
               onClick={handleResetZoom}
-              className="px-3 py-2 text-sm font-medium hover:bg-black/5 rounded-lg transition-all duration-200 min-w-[60px]"
+              className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 min-w-[60px]"
               title="Reset Zoom"
-              style={{ color: adaptiveColors.textColor }}
             >
               {zoom}%
             </button>
             <button
               onClick={handleZoomIn}
-              className="p-2 hover:bg-black/5 rounded-lg transition-all duration-200"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200"
               title="Zoom In"
             >
-              <Plus className="w-4 h-4" style={{ color: adaptiveColors.textColor }} />
+              <Plus className="w-4 h-4 text-gray-600" />
             </button>
           </div>
 
-          {/* Shape Count */}
-          <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 z-10">
+          {/* Shape Count */} 
+          <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700">
             {shapeCount} {shapeCount === 1 ? "shape" : "shapes"}
           </div>
         </div>

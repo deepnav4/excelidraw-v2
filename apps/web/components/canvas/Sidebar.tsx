@@ -58,9 +58,9 @@ export default function Sidebar({
   const [editingBgFill, setEditingBgFill] = useState(false);
   const [tempBgFill, setTempBgFill] = useState("");
 
-  const strokeColors = ["#1e1e1e", "#1971c2", "#2f9e44", "#f08c00", "#e03131"];
-  const bgColors = ["transparent", "#ffe3e3", "#d3f9d8", "#d0ebff", "#fff3bf"];
-  const canvasBackgrounds = ["#ffffff", "#fef9f3", "#f0f9ff", "#fef2f2", "#f5f5f5"];
+  const strokeColors = ["#1e1e1e", "#1971c2", "#2f9e44", "#f08c00", "#e03131", "#7950f2"];
+  const bgColors = ["transparent", "#ffe3e3", "#d3f9d8", "#d0ebff", "#fff3bf", "#f3f0ff"];
+  const canvasBackgrounds = ["#ffffff", "#fef9f3", "#f0f9ff", "#fef2f2", "#f5f5f5", "#f8f0fc"];
   const fillStyles = [
     { 
       id: "solid", 
@@ -119,65 +119,48 @@ export default function Sidebar({
 
   return (
     <div 
-      className="w-72 p-4 flex flex-col gap-4 shadow-xl h-full overflow-y-auto backdrop-blur-sm"
+      className="w-72 p-5 flex flex-col gap-6 shadow-xl h-full overflow-y-auto"
       style={{ 
-        backgroundColor: adaptiveColors.sidebarBg,
+        backgroundColor: canvasBg,
         borderRight: `1px solid ${adaptiveColors.borderColor}`
       }}
     >
       {/* Canvas Background */}
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
           Canvas Background
         </h3>
         <div className="grid grid-cols-6 gap-2">
-          {/* Current Color with Color Picker */}
-          <div className="relative">
-            <input
-              type="color"
-              value={canvasBg}
-              onChange={(e) => onCanvasBgChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              title={canvasBg}
-            />
-            <button
-              className="w-9 h-9 rounded-lg border-2 shadow-md transition-all duration-200 hover:scale-105 relative ring-1 ring-gray-300"
-              style={{ 
-                backgroundColor: canvasBg,
-                borderColor: adaptiveColors.textColor
-              }}
-              title={`Current: ${canvasBg}`}
-            >
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: adaptiveColors.textColor }}></div>
-            </button>
-          </div>
-          {canvasBackgrounds.map((color) => (
+            {canvasBackgrounds.map((color) => (
             <button
               key={color}
               onClick={() => onCanvasBgChange(color)}
-              className={`w-9 h-9 rounded-lg border-2 transition-all duration-200 hover:scale-105 ring-1 ring-gray-300 ${
-                canvasBg === color ? "shadow-md" : "border-gray-200"
-              }`}
+              className={`w-9 h-9 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-lg`}
               style={{
-                backgroundColor: color,
-                borderColor: canvasBg === color ? adaptiveColors.textColor : undefined
+              backgroundColor: color,
+              borderColor: canvasBg === color ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+              borderWidth: canvasBg === color ? '2.5px' : '1px',
+              boxShadow: canvasBg === color ? '0 0 0 2px rgba(0,0,0,0.05)' : 'none'
               }}
               title={color}
             />
-          ))}
+            ))}
         </div>
         {!editingCanvasBg ? (
-          <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-2 py-1">
-            <span className="text-xs text-gray-600 font-mono">{canvasBg}</span>
+          <div className="mt-2.5 flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+            <span className="text-[11px] font-mono font-medium" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>{canvasBg}</span>
             <button
               onClick={() => {
                 setEditingCanvasBg(true);
                 setTempCanvasBg(canvasBg);
               }}
-              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              className="p-1 rounded transition-all duration-200"
+              style={{ color: adaptiveColors.textColor, opacity: 0.5 }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
               title="Edit hex code"
             >
-              <Pencil className="w-3 h-3 text-gray-600" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
@@ -219,57 +202,40 @@ export default function Sidebar({
 
       {/* Stroke Color */}
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
           {hasSelection ? "Stroke (Selected)" : "Stroke"}
         </h3>
-        <div className="flex gap-2.5">
-          {/* Current Color with Color Picker */}
-          <div className="relative">
-            <input
-              type="color"
-              value={strokeFill}
-              onChange={(e) => onStrokeFillChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              title={strokeFill}
-            />
-            <button
-              className="w-9 h-9 rounded-lg border-2 shadow-md transition-all duration-200 hover:scale-105 relative ring-1 ring-gray-300"
-              style={{ 
-                backgroundColor: strokeFill,
-                borderColor: adaptiveColors.textColor
-              }}
-              title={`Current: ${strokeFill}`}
-            >
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: adaptiveColors.textColor }}></div>
-            </button>
-          </div>
+        <div className="grid grid-cols-6 gap-2">
           {strokeColors.map((color) => (
             <button
               key={color}
               onClick={() => onStrokeFillChange(color)}
-              className={`w-9 h-9 rounded-lg border-2 transition-all duration-200 hover:scale-110 ring-1 ring-gray-300 ${
-                strokeFill === color ? "shadow-md" : "border-gray-200"
-              }`}
+              className={`w-9 h-9 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-lg`}
               style={{
                 backgroundColor: color === "#000000" ? "#000" : color,
-                borderColor: strokeFill === color ? adaptiveColors.textColor : undefined
+                borderColor: strokeFill === color ? adaptiveColors.textColor : 'rgba(0,0,0,0.15)',
+                borderWidth: strokeFill === color ? '2.5px' : '1px',
+                boxShadow: strokeFill === color ? '0 0 0 2px rgba(0,0,0,0.05)' : 'none'
               }}
               title={color}
             />
           ))}
         </div>
         {!editingStroke ? (
-          <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-2 py-1">
-            <span className="text-xs text-gray-600 font-mono">{strokeFill}</span>
+          <div className="mt-2.5 flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+            <span className="text-[11px] font-mono font-medium" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>{strokeFill}</span>
             <button
               onClick={() => {
                 setEditingStroke(true);
                 setTempStroke(strokeFill);
               }}
-              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              className="p-1 rounded transition-all duration-200"
+              style={{ color: adaptiveColors.textColor, opacity: 0.5 }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
               title="Edit hex code"
             >
-              <Pencil className="w-3 h-3 text-gray-600" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
@@ -311,47 +277,20 @@ export default function Sidebar({
 
       {/* Background Color */}
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
           {hasSelection ? "Background (Selected)" : "Background"}
         </h3>
-        <div className="flex gap-2.5">
-          {/* Current Color with Color Picker */}
-          <div className="relative">
-            <input
-              type="color"
-              value={bgFill === "transparent" ? "#ffffff" : bgFill}
-              onChange={(e) => onBgFillChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              title={bgFill}
-            />
-            <button
-              className="w-9 h-9 rounded-lg border-2 shadow-md transition-all duration-200 hover:scale-105 relative ring-1 ring-gray-300"
-              style={{
-                backgroundColor: bgFill === "transparent" ? "#fff" : bgFill,
-                borderColor: adaptiveColors.textColor,
-                backgroundImage:
-                  bgFill === "transparent"
-                    ? "linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)"
-                    : "none",
-                backgroundSize: bgFill === "transparent" ? "8px 8px" : "auto",
-                backgroundPosition:
-                  bgFill === "transparent" ? "0 0, 0 4px, 4px -4px, -4px 0px" : "0 0",
-              }}
-              title={`Current: ${bgFill}`}
-            >
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: adaptiveColors.textColor }}></div>
-            </button>
-          </div>
+        <div className="grid grid-cols-6 gap-2">
           {bgColors.map((color) => (
             <button
               key={color}
               onClick={() => onBgFillChange(color)}
-              className={`w-9 h-9 rounded-lg border-2 transition-all duration-200 hover:scale-110 ring-1 ring-gray-300 ${
-                bgFill === color ? "shadow-md" : "border-gray-200"
-              }`}
+              className={`w-9 h-9 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-lg`}
               style={{
                 backgroundColor: color === "transparent" ? "#fff" : color,
-                borderColor: bgFill === color ? adaptiveColors.textColor : undefined,
+                borderColor: bgFill === color ? adaptiveColors.textColor : 'rgba(0,0,0,0.15)',
+                borderWidth: bgFill === color ? '2.5px' : '1px',
+                boxShadow: bgFill === color ? '0 0 0 2px rgba(0,0,0,0.05)' : 'none',
                 backgroundImage:
                   color === "transparent"
                     ? "linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)"
@@ -365,17 +304,20 @@ export default function Sidebar({
           ))}
         </div>
         {!editingBgFill ? (
-          <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-2 py-1">
-            <span className="text-xs text-gray-600 font-mono">{bgFill}</span>
+          <div className="mt-2.5 flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+            <span className="text-[11px] font-mono font-medium" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>{bgFill}</span>
             <button
               onClick={() => {
                 setEditingBgFill(true);
                 setTempBgFill(bgFill);
               }}
-              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              className="p-1 rounded transition-all duration-200"
+              style={{ color: adaptiveColors.textColor, opacity: 0.5 }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
               title="Edit hex code"
             >
-              <Pencil className="w-3 h-3 text-gray-600" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
@@ -417,22 +359,24 @@ export default function Sidebar({
 
       {/* Fill Style */}
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>Fill</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>Fill</h3>
         <div className="flex gap-2.5">
           {fillStyles.map((style) => (
             <button
               key={style.id}
               onClick={() => onFillStyleChange(style.id)}
-              className={`p-2.5 rounded-lg border-2 transition-all duration-200 ${
-                fillStyle === style.id
-                  ? "shadow-sm"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-              }`}
+              className={`p-2.5 rounded-lg border transition-all duration-200 hover:shadow-lg`}
               style={fillStyle === style.id ? {
                 backgroundColor: adaptiveColors.textColor,
                 color: adaptiveColors.toolbarBg,
-                borderColor: adaptiveColors.textColor
-              } : {}}
+                borderColor: adaptiveColors.textColor,
+                borderWidth: '1.5px'
+              } : {
+                borderColor: 'rgba(0,0,0,0.15)',
+                backgroundColor: 'rgba(255,255,255,0.5)',
+                color: adaptiveColors.textColor,
+                borderWidth: '1px'
+              }}
               title={style.label}
             >
               {style.icon}
@@ -441,106 +385,90 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Stroke Width */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>Stroke Width</h3>
-        <div className="flex gap-2.5">
-          {[1, 2, 4].map((width) => (
-            <button
-              key={width}
-              onClick={() => onStrokeWidthChange(width)}
-              className={`px-4 py-2.5 rounded-lg border-2 transition-all duration-200 ${
-                strokeWidth === width
-                  ? "shadow-sm"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-              style={strokeWidth === width ? {
-                backgroundColor: adaptiveColors.textColor,
-                borderColor: adaptiveColors.textColor
-              } : {}}
+      {/* Stroke Width & Style - Side by Side */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Stroke Width */}
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>Width</h3>
+          <div className="relative">
+            <select
+              value={hasSelection && selectedShape ? selectedShape.strokeWidth : strokeWidth}
+              onChange={(e) => onStrokeWidthChange(Number(e.target.value))}
+              className="w-full px-3 py-2.5 pr-8 rounded-lg border transition-all duration-200 focus:outline-none cursor-pointer appearance-none font-medium text-sm shadow-sm hover:shadow-md"
+              style={{
+                borderColor: 'rgba(0,0,0,0.12)',
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                color: adaptiveColors.textColor,
+                borderWidth: '1.5px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+              }}
             >
-              <Minus strokeWidth={width} className="w-6 h-2" />
-            </button>
-          ))}
+              <option value={1}>Thin</option>
+              <option value={2}>Medium</option>
+              <option value={4}>Thick</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4" style={{ color: adaptiveColors.textColor, opacity: 0.5 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Stroke Style */}
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>Style</h3>
+          <div className="relative">
+            <select
+              value={selectedShape?.strokeStyle || "solid"}
+              onChange={(e) => onStrokeStyleChange(e.target.value as any)}
+              disabled={!hasSelection || !selectedShape}
+              className="w-full px-3 py-2.5 pr-8 rounded-lg border transition-all duration-200 focus:outline-none cursor-pointer appearance-none font-medium text-sm shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+              style={{
+                borderColor: 'rgba(0,0,0,0.12)',
+                backgroundColor: hasSelection ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.03)',
+                color: adaptiveColors.textColor,
+                borderWidth: '1.5px',
+                boxShadow: hasSelection ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
+              }}
+            >
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4" style={{ color: adaptiveColors.textColor, opacity: hasSelection ? 0.5 : 0.25 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stroke Style - Only show when shape is selected */}
+      {/* Opacity - Only show when shape is selected */}
       {hasSelection && selectedShape && (
-        <>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>Stroke Style</h3>
-            <div className="flex gap-2.5">
-              <button
-                onClick={() => onStrokeStyleChange("solid")}
-                className={`flex-1 px-3 py-2.5 rounded-lg border-2 transition-all duration-200 ${
-                  selectedShape.strokeStyle === "solid"
-                    ? "shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-                style={selectedShape.strokeStyle === "solid" ? {
-                  backgroundColor: adaptiveColors.textColor,
-                  borderColor: adaptiveColors.textColor
-                } : {}}
-                title="Solid"
-              >
-                <div className="w-full h-0.5 bg-gray-600 rounded"></div>
-              </button>
-              <button
-                onClick={() => onStrokeStyleChange("dashed")}
-                className={`flex-1 px-3 py-2.5 rounded-lg border-2 transition-all duration-200 ${
-                  selectedShape.strokeStyle === "dashed"
-                    ? "shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-                style={selectedShape.strokeStyle === "dashed" ? {
-                  backgroundColor: adaptiveColors.textColor,
-                  borderColor: adaptiveColors.textColor
-                } : {}}
-              >
-                <div className="w-full h-0.5 border-t-2 border-dashed border-gray-600"></div>
-              </button>
-              <button
-                onClick={() => onStrokeStyleChange("dotted")}
-                className={`flex-1 px-3 py-2.5 rounded-lg border-2 transition-all duration-200 ${
-                  selectedShape.strokeStyle === "dotted"
-                    ? "shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-                style={selectedShape.strokeStyle === "dotted" ? {
-                  backgroundColor: adaptiveColors.textColor,
-                  borderColor: adaptiveColors.textColor
-                } : {}}
-              >
-                <div className="w-full h-0.5 border-t-2 border-dotted border-gray-600"></div>
-              </button>
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
+            Opacity: {selectedShape.opacity}%
+          </h3>
+          <div className="space-y-2">
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={selectedShape.opacity}
+              onChange={(e) => onOpacityChange(parseInt(e.target.value))}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, ${adaptiveColors.textColor} 0%, ${adaptiveColors.textColor} ${selectedShape.opacity - 10}%, rgba(0,0,0,0.1) ${selectedShape.opacity - 10}%, rgba(0,0,0,0.1) 100%)`
+              }}
+            />
+            <div className="flex justify-between text-[10px] font-medium" style={{ color: adaptiveColors.textColor, opacity: 0.5 }}>
+              <span>10%</span>
+              <span>100%</span>
             </div>
           </div>
-
-          {/* Opacity */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: adaptiveColors.textColor, opacity: 0.7 }}>
-              Opacity: {selectedShape.opacity}%
-            </h3>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="10"
-                max="100"
-                value={selectedShape.opacity}
-                onChange={(e) => onOpacityChange(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                style={{
-                  background: `linear-gradient(to right, #2563eb 0%, #2563eb ${selectedShape.opacity - 10}%, #e5e7eb ${selectedShape.opacity - 10}%, #e5e7eb 100%)`
-                }}
-              />
-              <div className="flex justify-between text-xs" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
-                <span>10%</span>
-                <span>100%</span>
-              </div>
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

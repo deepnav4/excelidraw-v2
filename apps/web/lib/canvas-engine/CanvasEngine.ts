@@ -81,6 +81,9 @@ export class CanvasEngine {
   private history: Shape[][] = [];
   private historyStep: number = -1;
 
+  // Clipboard
+  private copiedShape: Shape | null = null;
+
   // Callbacks
   private onShapeCountChange: ((count: number) => void) | null = null;
   private onHistoryChange: ((canUndo: boolean, canRedo: boolean) => void) | null = null;
@@ -141,6 +144,12 @@ export class CanvasEngine {
     } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
       e.preventDefault();
       this.redo();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      e.preventDefault();
+      this.copySelectedShape();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      e.preventDefault();
+      this.pasteShape();
     }
   }
 
@@ -844,6 +853,20 @@ export class CanvasEngine {
     }
   }
 
+  public updateSelectedShapeStrokeWidth(width: StrokeWidth) {
+    if (!this.selectedShapeId) return;
+    
+    const shape = this.shapes.find(s => s.id === this.selectedShapeId);
+    if (shape) {
+      shape.strokeWidth = width;
+      this.saveShapes();
+      this.render();
+      if (this.onSelectionChange) {
+        this.onSelectionChange(deepCloneShape(shape));
+      }
+    }
+  }
+
   public updateSelectedShapeOpacity(opacity: number) {
     if (!this.selectedShapeId) return;
     
@@ -870,6 +893,48 @@ export class CanvasEngine {
         this.onSelectionChange(deepCloneShape(shape));
       }
     }
+  }
+
+  public copySelectedShape(): boolean {
+    if (!this.selectedShapeId) return false;
+    
+    const shape = this.shapes.find(s => s.id === this.selectedShapeId);
+    if (shape) {
+      this.copiedShape = deepCloneShape(shape);
+      return true;
+    }
+    return false;
+  }
+
+  public pasteShape(): boolean {
+    if (!this.copiedShape) return false;
+    
+    // Create a new shape from the copied one
+    const newShape = deepCloneShape(this.copiedShape);
+    newShape.id = Date.now().toString() + Math.random();
+    
+    // Offset the pasted shape slightly so it's visible
+    const offset = 20;
+    newShape.x += offset;
+    newShape.y += offset;
+    
+    // Add the new shape
+    this.shapes.push(newShape);
+    this.saveShapes();
+    this.render();
+    
+    // Select the newly pasted shape
+    this.selectShape(newShape.id);
+    
+    if (this.onShapeCountChange) {
+      this.onShapeCountChange(this.shapes.length);
+    }
+    
+    return true;
+  }
+
+  public hasCopiedShape(): boolean {
+    return this.copiedShape !== null;
   }
 
   private createTextInput(screenX: number, screenY: number) {

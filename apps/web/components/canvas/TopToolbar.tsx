@@ -20,8 +20,11 @@ import {
   Redo2,
   Maximize,
   Minimize,
+  Copy,
+  Clipboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HamburgerIcon } from "@/components/ui/HamburgerIcon";
 
 interface TopToolbarProps {
   onToolChange: (tool: ToolType) => void;
@@ -33,6 +36,9 @@ interface TopToolbarProps {
   canRedo?: boolean;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  hasSelection?: boolean;
   adaptiveColors?: {
     toolbarBg: string;
     sidebarBg: string;
@@ -65,6 +71,9 @@ export function TopToolbar({
   canRedo = false, 
   onToggleSidebar, 
   isSidebarOpen = false,
+  onCopy,
+  onPaste,
+  hasSelection = false,
   adaptiveColors = {
     toolbarBg: 'rgba(255, 255, 255, 0.90)',
     sidebarBg: '#ffffff',
@@ -95,7 +104,7 @@ export function TopToolbar({
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           style={{ color: adaptiveColors.textColor }}
         >
-          <Menu className="w-5 h-5" />
+          <HamburgerIcon isOpen={isSidebarOpen} />
         </button>
       </div>
 
@@ -136,6 +145,29 @@ export function TopToolbar({
 
       {/* Right - Actions */}
       <div className="absolute right-6 flex items-center gap-2">
+        <button 
+          onClick={onCopy}
+          disabled={!hasSelection}
+          className={cn(
+            "p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5",
+            hasSelection 
+              ? "hover:bg-black/5" 
+              : "opacity-30 cursor-not-allowed"
+          )}
+          style={{ color: adaptiveColors.textColor }}
+          title="Copy (Ctrl+C)"
+        >
+          <Copy className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={onPaste}
+          className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
+          style={{ color: adaptiveColors.textColor }}
+          title="Paste (Ctrl+V)"
+        >
+          <Clipboard className="w-4 h-4" />
+        </button>
+        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
         <button 
           onClick={onUndo}
           disabled={!canUndo}

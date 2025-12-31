@@ -7,10 +7,11 @@ export const CanvasPlaceholder = () => {
           <h1 
             className="text-8xl mb-6"
             style={{ 
-              fontFamily: 'Pacifico, cursive',
+              fontFamily: 'Caveat, cursive',
               color: 'rgba(107, 114, 128, 0.12)',
               letterSpacing: '0.02em',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+              fontWeight: 600
             }}
           >
             excelidraw
@@ -18,7 +19,7 @@ export const CanvasPlaceholder = () => {
           <p 
             className="text-lg"
             style={{ 
-              fontFamily: 'Pacifico, cursive',
+              fontFamily: 'Outfit, sans-serif',
               color: 'rgba(107, 114, 128, 0.23)',
               fontWeight: 300
             }}

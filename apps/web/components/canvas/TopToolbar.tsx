@@ -96,8 +96,9 @@ export function TopToolbar({
 
   return (
     <div className="h-14 flex items-center justify-center px-6 relative z-30">
-      {/* Left - Menu Button */}
-      <div className="absolute left-6 flex items-center gap-3">
+      {/* Left Side - Menu + Extra Actions */}
+      <div className="absolute left-6 flex items-center gap-2">
+        {/* Menu Button */}
         <button
           onClick={onToggleSidebar}
           className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
@@ -105,6 +106,90 @@ export function TopToolbar({
           style={{ color: adaptiveColors.textColor }}
         >
           <HamburgerIcon isOpen={isSidebarOpen} />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
+
+        {/* Copy/Paste */}
+        <button 
+          onClick={onCopy}
+          disabled={!hasSelection}
+          className={cn(
+            "p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5",
+            hasSelection 
+              ? "hover:bg-black/5" 
+              : "opacity-30 cursor-not-allowed"
+          )}
+          style={{ color: adaptiveColors.textColor }}
+          title="Copy (Ctrl+C)"
+        >
+          <Copy className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={onPaste}
+          className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
+          style={{ color: adaptiveColors.textColor }}
+          title="Paste (Ctrl+V)"
+        >
+          <Clipboard className="w-4 h-4" />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
+
+        {/* Undo/Redo */}
+        <button 
+          onClick={onUndo}
+          disabled={!canUndo}
+          className={cn(
+            "p-2 rounded-lg transition-all duration-200",
+            canUndo 
+              ? "hover:bg-black/5" 
+              : "opacity-30 cursor-not-allowed"
+          )}
+          style={{ color: adaptiveColors.textColor }}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo2 className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={onRedo}
+          disabled={!canRedo}
+          className={cn(
+            "p-2 rounded-lg transition-all duration-200",
+            canRedo 
+              ? "hover:bg-black/5" 
+              : "opacity-30 cursor-not-allowed"
+          )}
+          style={{ color: adaptiveColors.textColor }}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo2 className="w-4 h-4" />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
+
+        {/* Fullscreen */}
+        <button 
+          onClick={toggleFullscreen}
+          className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
+          style={{ color: adaptiveColors.textColor }}
+          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+        </button>
+
+        {/* Clear */}
+        <button 
+          onClick={onClearCanvas}
+          className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-black/5 transition-all duration-200 flex items-center gap-2"
+          style={{ color: adaptiveColors.textColor }}
+          title="Clear canvas"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear
         </button>
       </div>
 
@@ -143,77 +228,9 @@ export function TopToolbar({
         ))}
       </div>
 
-      {/* Right - Actions */}
+      {/* Right Side - Reserved for Login/Room Info */}
       <div className="absolute right-6 flex items-center gap-2">
-        <button 
-          onClick={onCopy}
-          disabled={!hasSelection}
-          className={cn(
-            "p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5",
-            hasSelection 
-              ? "hover:bg-black/5" 
-              : "opacity-30 cursor-not-allowed"
-          )}
-          style={{ color: adaptiveColors.textColor }}
-          title="Copy (Ctrl+C)"
-        >
-          <Copy className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={onPaste}
-          className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
-          style={{ color: adaptiveColors.textColor }}
-          title="Paste (Ctrl+V)"
-        >
-          <Clipboard className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
-        <button 
-          onClick={onUndo}
-          disabled={!canUndo}
-          className={cn(
-            "p-2 rounded-lg transition-all duration-200",
-            canUndo 
-              ? "hover:bg-black/5" 
-              : "opacity-30 cursor-not-allowed"
-          )}
-          style={{ color: adaptiveColors.textColor }}
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo2 className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={onRedo}
-          disabled={!canRedo}
-          className={cn(
-            "p-2 rounded-lg transition-all duration-200",
-            canRedo 
-              ? "hover:bg-black/5" 
-              : "opacity-30 cursor-not-allowed"
-          )}
-          style={{ color: adaptiveColors.textColor }}
-          title="Redo (Ctrl+Y)"
-        >
-          <Redo2 className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 opacity-20" style={{ backgroundColor: adaptiveColors.textColor }} />
-        <button 
-          onClick={toggleFullscreen}
-          className="p-2 rounded-lg transition-all duration-200 hover:bg-black/5"
-          style={{ color: adaptiveColors.textColor }}
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        >
-          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-        </button>
-        <button 
-          onClick={onClearCanvas}
-          className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-black/5 transition-all duration-200 flex items-center gap-2"
-          style={{ color: adaptiveColors.textColor }}
-          title="Clear canvas"
-        >
-          <Trash2 className="w-4 h-4" />
-          Clear
-        </button>
+        {/* Share Button */}
         <button 
           className="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 shadow-sm backdrop-blur-sm"
           style={{
@@ -227,6 +244,7 @@ export function TopToolbar({
           <Share2 className="w-4 h-4" />
           Share
         </button>
+        {/* Login/Password/Room person components will go here */}
       </div>
     </div>
   );

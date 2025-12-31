@@ -7,6 +7,7 @@ import { TopToolbar } from "./TopToolbar";
 import Sidebar from "./Sidebar";
 import { Minus, Plus } from "lucide-react";
 import { CanvasPlaceholder } from "@/lib/functions/placeholders";
+import { ConfirmationModal, useConfirmationModal } from "@/lib/functions/confirmationModal";
 
 export function CanvasWrapper() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,6 +40,7 @@ export function CanvasWrapper() {
     return '#ffffff';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isOpen, showConfirmation, handleConfirm, handleCancel } = useConfirmationModal();
 
   // Persist colors to localStorage
   useEffect(() => {
@@ -154,8 +156,9 @@ export function CanvasWrapper() {
     setZoom(100);
   };
 
-  const handleClearCanvas = () => {
-    if (window.confirm("Are you sure you want to clear the canvas? This action cannot be undone.")) {
+  const handleClearCanvas = async () => {
+    const confirmed = await showConfirmation();
+    if (confirmed) {
       engineRef.current?.clearCanvas();
       setSelectedShape(null);
     }
@@ -272,6 +275,17 @@ export function CanvasWrapper() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        title="Clear Canvas"
+        message="Are you sure you want to clear the canvas? This action cannot be undone."
+        confirmText="Clear"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

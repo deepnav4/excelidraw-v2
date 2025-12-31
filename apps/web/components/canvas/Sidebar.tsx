@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Circle, Square, Minus, Pencil, Sun, Moon, Monitor } from "lucide-react";
 import type { Shape, StrokeStyle } from "@repo/common";
+import { normalizeHexColor, isValidHexColor } from "@/lib/functions/colorUtils";
+import { STROKE_COLORS, BG_COLORS, CANVAS_BACKGROUNDS, FILL_STYLES } from "@/lib/constants/constant";
 
 interface SidebarProps {
   strokeFill: string;
@@ -58,63 +60,12 @@ export default function Sidebar({
   const [editingBgFill, setEditingBgFill] = useState(false);
   const [tempBgFill, setTempBgFill] = useState("");
 
-  const strokeColors = ["#1e1e1e", "#1971c2", "#2f9e44", "#f08c00", "#e03131", "#7950f2"];
-  const bgColors = ["transparent", "#ffe3e3", "#d3f9d8", "#d0ebff", "#fff3bf", "#f3f0ff"];
-  const canvasBackgrounds = ["#ffffff", "#fef9f3", "#f0f9ff", "#fef2f2", "#f5f5f5", "#f8f0fc"];
-  const fillStyles = [
-    { 
-      id: "solid", 
-      label: "Solid", 
-      icon: <Square className="w-5 h-5" fill="currentColor" />
-    },
-    { 
-      id: "hachure", 
-      label: "Hachure", 
-      icon: (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-          <line x1="3" y1="10" x2="14" y2="21" />
-          <line x1="10" y1="3" x2="21" y2="14" />
-        </svg>
-      )
-    },
-    { 
-      id: "cross-hatch", 
-      label: "Cross", 
-      icon: (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="3" y1="10" x2="14" y2="21" />
-          <line x1="10" y1="3" x2="21" y2="14" />
-          <line x1="21" y1="10" x2="10" y2="21" />
-          <line x1="14" y1="3" x2="3" y2="14" />
-        </svg>
-      )
-    },
-  ];
-
   const handleCustomColorSubmit = () => {
     if (customColor.match(/^#[0-9A-Fa-f]{6}$/)) {
       onCanvasBgChange(customColor);
       setShowCustomColorInput(false);
       setCustomColor("");
     }
-  };
-
-  const normalizeHexColor = (hex: string): string => {
-    // Remove # if present
-    let normalized = hex.replace(/^#/, '');
-    
-    // Convert 3-digit to 6-digit
-    if (normalized.length === 3) {
-      normalized = normalized.split('').map(c => c + c).join('');
-    }
-    
-    // Add # prefix
-    return `#${normalized}`;
   };
 
   return (
@@ -131,7 +82,7 @@ export default function Sidebar({
           Canvas Background
         </h3>
         <div className="grid grid-cols-6 gap-2">
-            {canvasBackgrounds.map((color) => (
+            {CANVAS_BACKGROUNDS.map((color) => (
             <button
               key={color}
               onClick={() => onCanvasBgChange(color)}
@@ -175,7 +126,7 @@ export default function Sidebar({
                 placeholder="#ffffff"
                 autoFocus
               />
-              {tempCanvasBg && /^#?[0-9A-Fa-f]{3,6}$/.test(tempCanvasBg) && (
+              {tempCanvasBg && isValidHexColor(tempCanvasBg) && (
                 <div
                   className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded border border-gray-300"
                   style={{ backgroundColor: normalizeHexColor(tempCanvasBg) }}
@@ -184,7 +135,7 @@ export default function Sidebar({
             </div>
             <button
               onClick={() => {
-                if (/^#?[0-9A-Fa-f]{3,6}$/.test(tempCanvasBg)) {
+                if (isValidHexColor(tempCanvasBg)) {
                   onCanvasBgChange(normalizeHexColor(tempCanvasBg));
                 }
                 setEditingCanvasBg(false);
@@ -206,7 +157,7 @@ export default function Sidebar({
           {hasSelection ? "Stroke (Selected)" : "Stroke"}
         </h3>
         <div className="grid grid-cols-6 gap-2">
-          {strokeColors.map((color) => (
+          {STROKE_COLORS.map((color) => (
             <button
               key={color}
               onClick={() => onStrokeFillChange(color)}
@@ -250,7 +201,7 @@ export default function Sidebar({
                 placeholder="#000000"
                 autoFocus
               />
-              {tempStroke && /^#?[0-9A-Fa-f]{3,6}$/.test(tempStroke) && (
+              {tempStroke && isValidHexColor(tempStroke) && (
                 <div
                   className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded border border-gray-300"
                   style={{ backgroundColor: normalizeHexColor(tempStroke) }}
@@ -259,7 +210,7 @@ export default function Sidebar({
             </div>
             <button
               onClick={() => {
-                if (/^#?[0-9A-Fa-f]{3,6}$/.test(tempStroke)) {
+                if (isValidHexColor(tempStroke)) {
                   onStrokeFillChange(normalizeHexColor(tempStroke));
                 }
                 setEditingStroke(false);
@@ -281,7 +232,7 @@ export default function Sidebar({
           {hasSelection ? "Background (Selected)" : "Background"}
         </h3>
         <div className="grid grid-cols-6 gap-2">
-          {bgColors.map((color) => (
+          {BG_COLORS.map((color) => (
             <button
               key={color}
               onClick={() => onBgFillChange(color)}
@@ -332,7 +283,7 @@ export default function Sidebar({
                 placeholder="#ffffff"
                 autoFocus
               />
-              {tempBgFill && /^#?[0-9A-Fa-f]{3,6}$/.test(tempBgFill) && (
+              {tempBgFill && isValidHexColor(tempBgFill) && (
                 <div
                   className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded border border-gray-300"
                   style={{ backgroundColor: normalizeHexColor(tempBgFill) }}
@@ -341,7 +292,7 @@ export default function Sidebar({
             </div>
             <button
               onClick={() => {
-                if (/^#?[0-9A-Fa-f]{3,6}$/.test(tempBgFill)) {
+                if (isValidHexColor(tempBgFill)) {
                   onBgFillChange(normalizeHexColor(tempBgFill));
                 }
                 setEditingBgFill(false);
@@ -361,7 +312,7 @@ export default function Sidebar({
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>Fill</h3>
         <div className="flex gap-2.5">
-          {fillStyles.map((style) => (
+          {FILL_STYLES.map((style) => (
             <button
               key={style.id}
               onClick={() => onFillStyleChange(style.id)}

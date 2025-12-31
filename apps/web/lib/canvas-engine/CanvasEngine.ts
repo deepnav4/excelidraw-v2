@@ -2,6 +2,8 @@ import type { Shape, Point, ToolType, StrokeWidth, StrokeStyle, FillStyle } from
 //@ts-ignore
 import { ShapeRenderer } from "./ShapeRenderer";
 import { saveToLocalStorage, loadFromLocalStorage } from "../storage/localStorage";
+import { UndoRedoManager } from "../functions/undoRedo";
+import { ClipboardManager } from "../functions/clipboard";
 import {
   DEFAULT_STROKE_WIDTH,
   DEFAULT_STROKE_FILL,
@@ -78,20 +80,20 @@ export class CanvasEngine {
   private renderScheduled: boolean = false;
 
   // Undo/Redo
-  private history: Shape[][] = [];
-  private historyStep: number = -1;
+  private undoRedoManager: UndoRedoManager;
 
   // Clipboard
-  private copiedShape: Shape | null = null;
+  private clipboardManager: ClipboardManager;
 
   // Callbacks
   private onShapeCountChange: ((count: number) => void) | null = null;
-  private onHistoryChange: ((canUndo: boolean, canRedo: boolean) => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.shapeRenderer = new ShapeRenderer(this.ctx);
+    this.undoRedoManager = new UndoRedoManager(50);
+    this.clipboardManager = new ClipboardManager();
 
     this.init();
   }
@@ -759,12 +761,10 @@ export class CanvasEngine {
   public clearCanvas() {
     this.shapes = [];
     this.selectedShapeId = null;
-    // Clear history completely - user cannot undo clear action
-    this.history = [[]];
-    this.historyStep = 0;
+    this.undoRedoManager.clear();
+    this.undoRedoManager.initialize([]);
     this.saveShapes();
     this.notifyShapeCountChange();
-    this.notifyHistoryChange();
     this.render();
   }
 
@@ -899,26 +899,12 @@ export class CanvasEngine {
     if (!this.selectedShapeId) return false;
     
     const shape = this.shapes.find(s => s.id === this.selectedShapeId);
-    if (shape) {
-      this.copiedShape = deepCloneShape(shape);
-      return true;
-    }
-    return false;
+    return this.clipboardManager.copyShape(shape || null);
   }
 
   public pasteShape(): boolean {
-    if (!this.copiedShape) return false;
-    
-    // Create a new shape from the copied one
-    const newShape = deepCloneShape(this.copiedShape);
-    newShape.id = Date.now().toString() + Math.random();
-    
-    // Offset the pasted shape slightly so it's visible
-    const offset = 20;
-    if ('x' in newShape && 'y' in newShape) {
-      newShape.x += offset;
-      newShape.y += offset;
-    }
+    const newShape = this.clipboardManager.pasteShape();
+    if (!newShape) return false;
     
     // Add the new shape
     this.shapes.push(newShape);
@@ -939,7 +925,7 @@ export class CanvasEngine {
   }
 
   public hasCopiedShape(): boolean {
-    return this.copiedShape !== null;
+    return this.clipboardManager.hasCopiedShape();
   }
 
   private createTextInput(screenX: number, screenY: number) {
@@ -1244,52 +1230,31 @@ export class CanvasEngine {
   }
 
   private saveToHistory() {
-    // Remove any history after current step
-    this.history = this.history.slice(0, this.historyStep + 1);
-    
-    // Add current state to history (deep clone)
-    this.history.push(JSON.parse(JSON.stringify(this.shapes)));
-    this.historyStep++;
-    
-    // Limit history to 50 steps
-    if (this.history.length > 50) {
-      this.history.shift();
-      this.historyStep--;
-    }
-    
-    this.notifyHistoryChange();
-  }
-
-  private notifyHistoryChange() {
-    if (this.onHistoryChange) {
-      this.onHistoryChange(this.historyStep > 0, this.historyStep < this.history.length - 1);
-    }
+    this.undoRedoManager.saveState(this.shapes);
   }
 
   public undo() {
-    if (this.historyStep > 0) {
-      this.historyStep--;
-      this.shapes = JSON.parse(JSON.stringify(this.history[this.historyStep]));
+    const previousState = this.undoRedoManager.undo(this.shapes);
+    if (previousState) {
+      this.shapes = previousState;
       saveToLocalStorage(LOCALSTORAGE_CANVAS_KEY, this.shapes);
       this.notifyShapeCountChange();
-      this.notifyHistoryChange();
       this.render();
     }
   }
 
   public redo() {
-    if (this.historyStep < this.history.length - 1) {
-      this.historyStep++;
-      this.shapes = JSON.parse(JSON.stringify(this.history[this.historyStep]));
+    const nextState = this.undoRedoManager.redo();
+    if (nextState) {
+      this.shapes = nextState;
       saveToLocalStorage(LOCALSTORAGE_CANVAS_KEY, this.shapes);
       this.notifyShapeCountChange();
-      this.notifyHistoryChange();
       this.render();
     }
   }
 
   public setOnHistoryChange(callback: (canUndo: boolean, canRedo: boolean) => void) {
-    this.onHistoryChange = callback;
+    this.undoRedoManager.setOnHistoryChange(callback);
   }
 
   private loadShapes() {
@@ -1297,10 +1262,7 @@ export class CanvasEngine {
     if (loaded) {
       this.shapes = loaded;
       this.notifyShapeCountChange();
-      // Initialize history with loaded shapes
-      this.history = [JSON.parse(JSON.stringify(this.shapes))];
-      this.historyStep = 0;
-      this.notifyHistoryChange();
+      this.undoRedoManager.initialize(this.shapes);
     }
   }
 

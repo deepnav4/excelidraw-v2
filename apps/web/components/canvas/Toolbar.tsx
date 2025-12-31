@@ -16,6 +16,7 @@ import {
   Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TOOLBAR_COLORS, STROKE_WIDTHS } from "@/lib/constants/constant";
 
 interface ToolbarProps {
   onToolChange: (tool: ToolType) => void;
@@ -39,19 +40,6 @@ const tools: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   { type: "text", icon: <Type className="w-5 h-5" />, label: "Text" },
   { type: "eraser", icon: <Eraser className="w-5 h-5" />, label: "Eraser" },
 ];
-
-const colors = [
-  "#000000",
-  "#e03131",
-  "#2f9e44",
-  "#1971c2",
-  "#f08c00",
-  "#e64980",
-  "#be4bdb",
-  "#ffffff",
-];
-
-const widths: StrokeWidth[] = [1, 2, 4];
 
 export function Toolbar({
   onToolChange,
@@ -109,7 +97,7 @@ export function Toolbar({
 
         {/* Stroke Width */}
         <div className="flex items-center gap-1 bg-gray-700 rounded-lg p-1">
-          {widths.map((width) => (
+          {STROKE_WIDTHS.map((width) => (
             <button
               key={width}
               onClick={() => handleWidthClick(width)}
@@ -134,7 +122,7 @@ export function Toolbar({
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-300">Stroke:</span>
           <div className="flex items-center gap-1 bg-gray-700 rounded-lg p-1">
-            {colors.map((color) => (
+            {TOOLBAR_COLORS.map((color) => (
               <button
                 key={color}
                 onClick={() => handleStrokeColorClick(color)}
@@ -169,7 +157,7 @@ export function Toolbar({
                 ∅
               </div>
             </button>
-            {colors.slice(1).map((color) => (
+            {TOOLBAR_COLORS.slice(1).map((color) => (
               <button
                 key={color}
                 onClick={() => handleBgColorClick(color)}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CanvasEngine } from "@/lib/canvas-engine/CanvasEngine";
-import type { ToolType, Shape } from "@repo/common";
+import type { ToolType, Shape, FontFamily, FontSize, TextAlign } from "@repo/common";
 import { TopToolbar } from "./TopToolbar";
 import Sidebar from "./Sidebar";
 import { Minus, Plus } from "lucide-react";
@@ -40,6 +40,9 @@ export function CanvasWrapper() {
     return '#ffffff';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [fontFamily, setFontFamily] = useState<FontFamily>("hand-drawn");
+  const [fontSize, setFontSize] = useState<FontSize>("Medium");
+  const [textAlign, setTextAlign] = useState<TextAlign>("left");
   const { isOpen, showConfirmation, handleConfirm, handleCancel } = useConfirmationModal();
 
   // Persist colors to localStorage
@@ -60,7 +63,13 @@ export function CanvasWrapper() {
 
     const engine = new CanvasEngine(canvasRef.current);
     engine.setOnShapeCountChange(setShapeCount);
-    engine.setOnSelectionChange(setSelectedShape);
+    engine.setOnSelectionChange((shape) => {
+      setSelectedShape(shape);
+      // Auto-open sidebar when text shape is selected
+      if (shape && shape.type === "text") {
+        setIsSidebarOpen(true);
+      }
+    });
     engine.setOnHistoryChange((undo, redo) => {
       setCanUndo(undo);
       setCanRedo(redo);
@@ -97,6 +106,11 @@ export function CanvasWrapper() {
   const handleToolChange = (tool: ToolType) => {
     setActiveTool(tool);
     engineRef.current?.setTool(tool);
+    
+    // Auto-open sidebar when text tool is selected
+    if (tool === "text") {
+      setIsSidebarOpen(true);
+    }
   };
 
   const handleStrokeFillChange = (color: string) => {
@@ -192,6 +206,36 @@ export function CanvasWrapper() {
     engineRef.current?.pasteShape();
   };
 
+  const handleFontFamilyChange = (family: FontFamily) => {
+    setFontFamily(family);
+    engineRef.current?.setFontFamily(family);
+    
+    // If a text shape is selected, update it
+    if (selectedShape && selectedShape.type === "text") {
+      engineRef.current?.updateSelectedTextFontFamily(family);
+    }
+  };
+
+  const handleFontSizeChange = (size: FontSize) => {
+    setFontSize(size);
+    engineRef.current?.setFontSize(size);
+    
+    // If a text shape is selected, update it
+    if (selectedShape && selectedShape.type === "text") {
+      engineRef.current?.updateSelectedTextFontSize(size);
+    }
+  };
+
+  const handleTextAlignChange = (align: TextAlign) => {
+    setTextAlign(align);
+    engineRef.current?.setTextAlign(align);
+    
+    // If a text shape is selected, update it
+    if (selectedShape && selectedShape.type === "text") {
+      engineRef.current?.updateSelectedTextAlign(align);
+    }
+  };
+
   return (
     <div className="h-screen w-full flex flex-col" style={{ backgroundColor: canvasBg }}>
       <TopToolbar 
@@ -223,6 +267,10 @@ export function CanvasWrapper() {
             strokeWidth={strokeWidth}
             canvasBg={canvasBg}
             selectedShape={selectedShape}
+            currentTool={activeTool}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            textAlign={textAlign}
             onStrokeFillChange={handleStrokeFillChange}
             onBgFillChange={handleBgFillChange}
             onFillStyleChange={handleFillStyleChange}
@@ -230,6 +278,9 @@ export function CanvasWrapper() {
             onCanvasBgChange={handleCanvasBgChange}
             onStrokeStyleChange={handleStrokeStyleChange}
             onOpacityChange={handleOpacityChange}
+            onFontFamilyChange={handleFontFamilyChange}
+            onFontSizeChange={handleFontSizeChange}
+            onTextAlignChange={handleTextAlignChange}
             hasSelection={!!selectedShape}
           />
         </div>

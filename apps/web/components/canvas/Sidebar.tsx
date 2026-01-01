@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Circle, Square, Minus, Pencil, Sun, Moon, Monitor } from "lucide-react";
-import type { Shape, StrokeStyle } from "@repo/common";
+import { Circle, Square, Minus, Pencil, Sun, Moon, Monitor, AlignLeft, AlignCenter, AlignRight, Code2, Type } from "lucide-react";
+import type { Shape, StrokeStyle, FontFamily, FontSize, TextAlign } from "@repo/common";
 import { normalizeHexColor, isValidHexColor } from "@/lib/functions/colorUtils";
 import { STROKE_COLORS, BG_COLORS, CANVAS_BACKGROUNDS, FILL_STYLES } from "@/lib/constants/constant";
 
@@ -13,6 +13,10 @@ interface SidebarProps {
   strokeWidth: number;
   canvasBg: string;
   selectedShape: Shape | null;
+  currentTool?: string;
+  fontFamily?: FontFamily;
+  fontSize?: FontSize;
+  textAlign?: TextAlign;
   onStrokeFillChange: (color: string) => void;
   onBgFillChange: (color: string) => void;
   onFillStyleChange: (style: string) => void;
@@ -20,6 +24,9 @@ interface SidebarProps {
   onCanvasBgChange: (color: string) => void;
   onStrokeStyleChange: (style: StrokeStyle) => void;
   onOpacityChange: (opacity: number) => void;
+  onFontFamilyChange?: (fontFamily: FontFamily) => void;
+  onFontSizeChange?: (fontSize: FontSize) => void;
+  onTextAlignChange?: (textAlign: TextAlign) => void;
   hasSelection?: boolean;
   adaptiveColors?: {
     toolbarBg: string;
@@ -36,6 +43,10 @@ export default function Sidebar({
   strokeWidth,
   canvasBg,
   selectedShape,
+  currentTool,
+  fontFamily = "hand-drawn",
+  fontSize = "Medium",
+  textAlign = "left",
   onStrokeFillChange,
   onBgFillChange,
   onFillStyleChange,
@@ -43,6 +54,9 @@ export default function Sidebar({
   onCanvasBgChange,
   onStrokeStyleChange,
   onOpacityChange,
+  onFontFamilyChange,
+  onFontSizeChange,
+  onTextAlignChange,
   hasSelection = false,
   adaptiveColors = {
     toolbarBg: 'rgba(255, 255, 255, 0.90)',
@@ -68,15 +82,31 @@ export default function Sidebar({
     }
   };
 
+  // Check if we're in text mode (text tool active or text shape selected)
+  const isTextMode = currentTool === "text" || (selectedShape && selectedShape.type === "text");
+  
+  // Get current text properties from selected shape or defaults
+  const currentFontFamily = (selectedShape && selectedShape.type === "text") 
+    ? selectedShape.fontFamily 
+    : fontFamily;
+  const currentFontSize = (selectedShape && selectedShape.type === "text") 
+    ? selectedShape.fontSize 
+    : fontSize;
+  const currentTextAlign = (selectedShape && selectedShape.type === "text") 
+    ? selectedShape.textAlign 
+    : textAlign;
+
   return (
     <div 
       className="w-72 p-5 flex flex-col gap-6 shadow-xl h-full overflow-y-auto"
       style={{ 
         backgroundColor: canvasBg,
-        borderRight: `1px solid ${adaptiveColors.borderColor}`
+        borderRight: `1px solid ${adaptiveColors.borderColor}`,
+        fontFamily: 'Outfit, sans-serif'
       }}
     >
-      {/* Canvas Background */}
+      {/* Canvas Background - Hide in text mode */}
+      {!isTextMode && (
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
           Canvas Background
@@ -150,11 +180,12 @@ export default function Sidebar({
           </div>
         )}
       </div>
+      )}
 
       {/* Stroke Color */}
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
-          {hasSelection ? "Stroke (Selected)" : "Stroke"}
+          {isTextMode ? "Text Color" : (hasSelection ? "Stroke (Selected)" : "Stroke")}
         </h3>
         <div className="grid grid-cols-6 gap-2">
           {STROKE_COLORS.map((color) => (
@@ -226,10 +257,11 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Background Color */}
+      {/* Background Color - Show for text or non-text shapes */}
+      {(isTextMode || !selectedShape || (selectedShape.type !== "line" && selectedShape.type !== "arrow")) && (
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
-          {hasSelection ? "Background (Selected)" : "Background"}
+          {isTextMode ? "Text Background" : (hasSelection ? "Background (Selected)" : "Background")}
         </h3>
         <div className="grid grid-cols-6 gap-2">
           {BG_COLORS.map((color) => (
@@ -307,8 +339,10 @@ export default function Sidebar({
           </div>
         )}
       </div>
+      )}
 
-      {/* Fill Style */}
+      {/* Fill Style - Hide in text mode */}
+      {!isTextMode && (
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>Fill</h3>
         <div className="flex gap-2.5">
@@ -335,8 +369,10 @@ export default function Sidebar({
           ))}
         </div>
       </div>
+      )}
 
-      {/* Stroke Width & Style - Side by Side */}
+      {/* Stroke Width & Style - Hide in text mode */}
+      {!isTextMode && (
       <div className="grid grid-cols-2 gap-3">
         {/* Stroke Width */}
         <div>
@@ -395,9 +431,10 @@ export default function Sidebar({
           </div>
         </div>
       </div>
+      )}
 
-      {/* Opacity - Only show when shape is selected */}
-      {hasSelection && selectedShape && (
+      {/* Opacity - Only show when shape is selected and not in text mode */}
+      {!isTextMode && hasSelection && selectedShape && (
         <div>
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6 }}>
             Opacity: {selectedShape.opacity}%
@@ -420,6 +457,145 @@ export default function Sidebar({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Text Properties - Show when text tool is active or text shape is selected */}
+      {isTextMode && (
+        <>
+          {/* Font Family */}
+          <div>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>
+              Font family
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onFontFamilyChange?.("hand-drawn")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentFontFamily === "hand-drawn" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontFamily === "hand-drawn" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Hand-drawn"
+              >
+                <svg className="w-5 h-5" style={{ color: adaptiveColors.textColor }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => onFontFamilyChange?.("normal")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentFontFamily === "normal" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontFamily === "normal" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Normal"
+              >
+                <Type className="w-5 h-5" style={{ color: adaptiveColors.textColor }} />
+              </button>
+              <button
+                onClick={() => onFontFamilyChange?.("code")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentFontFamily === "code" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontFamily === "code" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Code"
+              >
+                <Code2 className="w-5 h-5" style={{ color: adaptiveColors.textColor }} />
+              </button>
+            </div>
+          </div>
+
+          {/* Font Size */}
+          <div>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>
+              Font size
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onFontSizeChange?.("Small")}
+                className={`flex-1 py-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 font-medium`}
+                style={{
+                  borderColor: currentFontSize === "Small" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontSize === "Small" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                  color: adaptiveColors.textColor,
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: '14px'
+                }}
+              >
+                S
+              </button>
+              <button
+                onClick={() => onFontSizeChange?.("Medium")}
+                className={`flex-1 py-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 font-medium`}
+                style={{
+                  borderColor: currentFontSize === "Medium" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontSize === "Medium" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                  color: adaptiveColors.textColor,
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: '14px'
+                }}
+              >
+                M
+              </button>
+              <button
+                onClick={() => onFontSizeChange?.("Large")}
+                className={`flex-1 py-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 font-medium`}
+                style={{
+                  borderColor: currentFontSize === "Large" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentFontSize === "Large" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                  color: adaptiveColors.textColor,
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: '14px'
+                }}
+              >
+                L
+              </button>
+            </div>
+          </div>
+
+          {/* Text Align */}
+          <div>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: adaptiveColors.textColor, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>
+              Text align
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onTextAlignChange?.("left")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentTextAlign === "left" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentTextAlign === "left" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Left"
+              >
+                <AlignLeft className="w-5 h-5" style={{ color: adaptiveColors.textColor }} />
+              </button>
+              <button
+                onClick={() => onTextAlignChange?.("center")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentTextAlign === "center" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentTextAlign === "center" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Center"
+              >
+                <AlignCenter className="w-5 h-5" style={{ color: adaptiveColors.textColor }} />
+              </button>
+              <button
+                onClick={() => onTextAlignChange?.("right")}
+                className={`flex-1 p-2.5 rounded-lg border-2 transition-all duration-200 hover:scale-105 flex items-center justify-center`}
+                style={{
+                  borderColor: currentTextAlign === "right" ? adaptiveColors.textColor : 'rgba(0,0,0,0.1)',
+                  backgroundColor: currentTextAlign === "right" ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+                title="Right"
+              >
+                <AlignRight className="w-5 h-5" style={{ color: adaptiveColors.textColor }} />
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

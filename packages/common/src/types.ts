@@ -63,15 +63,33 @@ export type FreeDraw = BaseShape & {
   points: Point[];
 };
 
-export type TextShape = Omit<BaseShape, "bgFill" | "fillStyle"> & {
+export type FontFamily = "hand-drawn" | "normal" | "code";
+export type FontSize = "Small" | "Medium" | "Large";
+export type TextAlign = "left" | "center" | "right";
+
+export const FONT_SIZE_MAP: Record<FontSize, number> = {
+  Small: 16,
+  Medium: 20,
+  Large: 28,
+};
+
+export const FONT_FAMILY_MAP: Record<FontFamily, string> = {
+  "hand-drawn": "Caveat, cursive",
+  "normal": "Outfit, sans-serif",
+  "code": "Courier New, monospace",
+};
+
+export type TextShape = Omit<BaseShape, "fillStyle"> & {
   type: "text";
   x: number;
   y: number;
   width: number;
   height: number;
   text: string;
-  fontSize: number;
-  fontFamily: string;
+  fontSize: FontSize;
+  fontFamily: FontFamily;
+  textAlign: TextAlign;
+  bgFill: string; // Background color for text
 };
 
 export type Shape =

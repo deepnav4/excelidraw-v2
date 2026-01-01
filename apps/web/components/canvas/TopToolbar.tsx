@@ -57,7 +57,7 @@ const tools: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   { type: "line", icon: <Minus className="w-5 h-5" />, label: "Line" },
   { type: "arrow", icon: <ArrowRight className="w-5 h-5" />, label: "Arrow" },
   { type: "free-draw", icon: <Pencil className="w-5 h-5" />, label: "Draw" },
-  // { type: "text", icon: <Type className="w-5 h-5" />, label: "Text" }, // Disabled temporarily
+  { type: "text", icon: <Type className="w-5 h-5" />, label: "Text" },
   { type: "eraser", icon: <Eraser className="w-5 h-5" />, label: "Eraser" },
 ];
 

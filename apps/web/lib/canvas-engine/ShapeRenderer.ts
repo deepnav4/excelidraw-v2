@@ -202,9 +202,32 @@ export class ShapeRenderer {
   }
 
   private renderText(shape: Extract<Shape, { type: "text" }>) {
-    this.ctx.font = `${shape.fontSize}px ${shape.fontFamily}`;
+    const { FONT_SIZE_MAP, FONT_FAMILY_MAP } = require("@repo/common");
+    const fontSize = FONT_SIZE_MAP[shape.fontSize];
+    const fontFamily = FONT_FAMILY_MAP[shape.fontFamily];
+    
+    const padding = 4; // Padding around text
+    
+    // Draw background if not transparent
+    if (shape.bgFill && shape.bgFill !== "transparent") {
+      this.ctx.fillStyle = shape.bgFill;
+      this.ctx.fillRect(shape.x - padding, shape.y - padding, shape.width + padding * 2, shape.height + padding * 2);
+    }
+    
+    this.ctx.font = `${fontSize}px ${fontFamily}`;
     this.ctx.fillStyle = shape.strokeFill;
-    this.ctx.fillText(shape.text, shape.x, shape.y);
+    this.ctx.textAlign = shape.textAlign;
+    this.ctx.textBaseline = "top";
+    
+    // Calculate x position based on alignment
+    let textX = shape.x;
+    if (shape.textAlign === "center") {
+      textX = shape.x + shape.width / 2;
+    } else if (shape.textAlign === "right") {
+      textX = shape.x + shape.width;
+    }
+    
+    this.ctx.fillText(shape.text, textX, shape.y);
   }
 
   private drawSelectionBox(shape: Shape) {
@@ -257,10 +280,9 @@ export class ShapeRenderer {
       this.ctx.strokeRect(minX - 8, minY - 8, maxX - minX + 16, maxY - minY + 16);
       bounds = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
     } else if (shape.type === "text") {
-      this.ctx.font = `${shape.fontSize}px ${shape.fontFamily}`;
-      const metrics = this.ctx.measureText(shape.text);
-      this.ctx.strokeRect(shape.x - 8, shape.y - 8, metrics.width + 16, shape.fontSize + 16);
-      bounds = { x: shape.x, y: shape.y, width: metrics.width, height: shape.fontSize };
+      // Text is rendered with textBaseline: "top"
+      this.ctx.strokeRect(shape.x - 8, shape.y - 8, shape.width + 16, shape.height + 16);
+      bounds = { x: shape.x, y: shape.y, width: shape.width, height: shape.height };
     }
 
     // Draw resize handles (skip for free-draw)

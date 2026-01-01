@@ -1,4 +1,4 @@
-import type { Shape, Point, ToolType, StrokeWidth, StrokeStyle, FillStyle } from "@repo/common";
+import type { Shape, Point, ToolType, StrokeWidth, StrokeStyle, FillStyle, FontFamily, FontSize, TextAlign } from "@repo/common";
 //@ts-ignore
 import { ShapeRenderer } from "./ShapeRenderer";
 import { saveToLocalStorage, loadFromLocalStorage } from "../storage/localStorage";
@@ -11,6 +11,8 @@ import {
   DEFAULT_STROKE_STYLE,
   DEFAULT_FILL_STYLE,
   LOCALSTORAGE_CANVAS_KEY,
+  FONT_SIZE_MAP,
+  FONT_FAMILY_MAP,
 } from "@repo/common";
 import { v4 as uuidv4 } from "uuid";
 
@@ -52,6 +54,11 @@ export class CanvasEngine {
   private bgFill: string = DEFAULT_BG_FILL;
   private strokeStyle: StrokeStyle = DEFAULT_STROKE_STYLE as StrokeStyle;
   private fillStyle: FillStyle = DEFAULT_FILL_STYLE as FillStyle;
+  
+  // Text settings
+  private fontFamily: FontFamily = "hand-drawn";
+  private fontSize: FontSize = "Medium";
+  private textAlign: TextAlign = "left";
 
   // Selection
   private selectedShapeId: string | null = null;
@@ -75,6 +82,7 @@ export class CanvasEngine {
 
   // Eraser state - track shapes marked for deletion
   private shapesMarkedForDeletion: Set<string> = new Set();
+  private eraserActive: boolean = false;
 
   // Render optimization
   private renderScheduled: boolean = false;
@@ -102,7 +110,9 @@ export class CanvasEngine {
     this.resizeCanvas();
     this.loadShapes();
     this.setupEventListeners();
+    // Render twice to ensure shapes are displayed after load
     this.render();
+    requestAnimationFrame(() => this.render());
   }
 
   public resizeCanvas() {
@@ -173,11 +183,6 @@ export class CanvasEngine {
       return;
     }
 
-    if (this.currentTool === "text") {
-      this.createTextInput(e.clientX - rect.left, e.clientY - rect.top);
-      return;
-    }
-
     if (this.currentTool === "eraser") {
       // Clear any previous marks
       this.shapesMarkedForDeletion.clear();
@@ -187,7 +192,7 @@ export class CanvasEngine {
         this.shapesMarkedForDeletion.add(this.shapes[clickedShapeIndex].id);
         this.render();
       }
-      this.isDrawing = true; // Track that eraser is active
+      this.eraserActive = true; // Track that eraser is active
       return;
     }
 
@@ -207,10 +212,41 @@ export class CanvasEngine {
       }
     }
 
+    // Check if clicking on existing shape (for text tool and other tools)
+    const clickedShapeIndex = this.findShapeAtPoint(this.startX, this.startY);
+    
+    // Handle text tool - only create new text if clicking empty space
+    if (this.currentTool === "text") {
+      if (clickedShapeIndex !== -1) {
+        const clickedShape = this.shapes[clickedShapeIndex];
+        
+        // If clicking on already selected text shape, start dragging
+        if (this.selectedShapeId === clickedShape.id) {
+          this.isDraggingShape = true;
+          this.dragStartX = this.startX;
+          this.dragStartY = this.startY;
+          this.shapeOriginalPos = { x: clickedShape.x, y: clickedShape.y };
+          this.render();
+          return;
+        }
+        
+        // Select the clicked shape
+        this.selectedShapeId = clickedShape.id;
+        if (this.onSelectionChange) {
+          this.onSelectionChange(clickedShape);
+        }
+        this.render();
+        return;
+      } else {
+        // Clicking empty space - create new text input
+        this.createTextInput(e.clientX - rect.left, e.clientY - rect.top);
+        return;
+      }
+    }
+
     // Allow selecting shapes with any tool (except drawing tools)
-    const nonSelectableTools: ToolType[] = ["free-draw", "eraser", "text"];
+    const nonSelectableTools: ToolType[] = ["free-draw", "eraser"];
     if (!nonSelectableTools.includes(this.currentTool)) {
-      const clickedShapeIndex = this.findShapeAtPoint(this.startX, this.startY);
       if (clickedShapeIndex !== -1) {
         const clickedShape = this.shapes[clickedShapeIndex];
         
@@ -262,6 +298,9 @@ export class CanvasEngine {
     // Start drawing for shape tools (not selection, grab, eraser, or text)
     if (!['selection', 'grab', 'eraser', 'text'].includes(this.currentTool)) {
       this.isDrawing = true;
+    } else {
+      // Make sure isDrawing is false for non-drawing tools
+      return;
     }
 
     if (this.currentTool === "free-draw") {
@@ -316,8 +355,9 @@ export class CanvasEngine {
           }
         }
       } else if (shape.type === "text") {
+        // Text is rendered with textBaseline: "top", so y is the top of the text
         if (x >= shape.x && x <= shape.x + shape.width &&
-            y >= shape.y - shape.height && y <= shape.y) {
+            y >= shape.y && y <= shape.y + shape.height) {
           return i;
         }
       }
@@ -431,7 +471,7 @@ export class CanvasEngine {
     }
 
     // Handle eraser - mark shapes while dragging
-    if (this.currentTool === "eraser" && this.isDrawing) {
+    if (this.currentTool === "eraser" && this.eraserActive) {
       const rect = this.canvas.getBoundingClientRect();
       const currentX = (e.clientX - rect.left - this.panX) / this.scale;
       const currentY = (e.clientY - rect.top - this.panY) / this.scale;
@@ -499,7 +539,13 @@ export class CanvasEngine {
     } else if (this.currentTool === "selection") {
       this.canvas.style.cursor = "default";
     } else if (this.currentTool === "eraser") {
-      this.canvas.style.cursor = "pointer";
+      // Create a circular cursor for eraser
+      const size = 20;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 1}" fill="none" stroke="rgba(239, 68, 68, 0.8)" stroke-width="2"/>
+      </svg>`;
+      const encoded = btoa(svg);
+      this.canvas.style.cursor = `url('data:image/svg+xml;base64,${encoded}') ${size/2} ${size/2}, pointer`;
     } else {
       this.canvas.style.cursor = "crosshair";
     }
@@ -513,7 +559,7 @@ export class CanvasEngine {
     }
 
     // Handle eraser - delete all marked shapes
-    if (this.currentTool === "eraser" && this.isDrawing) {
+    if (this.currentTool === "eraser" && this.eraserActive) {
       // Delete all shapes that were marked (if any)
       if (this.shapesMarkedForDeletion.size > 0) {
         this.shapes = this.shapes.filter(shape => !this.shapesMarkedForDeletion.has(shape.id));
@@ -521,7 +567,7 @@ export class CanvasEngine {
         this.notifyShapeCountChange();
       }
       this.shapesMarkedForDeletion.clear();
-      this.isDrawing = false;
+      this.eraserActive = false;
       this.render();
       return;
     }
@@ -672,11 +718,6 @@ export class CanvasEngine {
   }
 
   private render() {
-    // Don't render if text input is active
-    if (this.activeTextInput) {
-      return;
-    }
-    
     // Batch render calls using requestAnimationFrame
     if (this.renderScheduled) {
       return;
@@ -758,6 +799,30 @@ export class CanvasEngine {
     this.fillStyle = style;
   }
 
+  public setFontFamily(fontFamily: FontFamily) {
+    this.fontFamily = fontFamily;
+  }
+
+  public setFontSize(fontSize: FontSize) {
+    this.fontSize = fontSize;
+  }
+
+  public setTextAlign(textAlign: TextAlign) {
+    this.textAlign = textAlign;
+  }
+
+  public getFontFamily(): FontFamily {
+    return this.fontFamily;
+  }
+
+  public getFontSize(): FontSize {
+    return this.fontSize;
+  }
+
+  public getTextAlign(): TextAlign {
+    return this.textAlign;
+  }
+
   public clearCanvas() {
     this.shapes = [];
     this.selectedShapeId = null;
@@ -815,7 +880,7 @@ export class CanvasEngine {
     if (!this.selectedShapeId) return;
     
     const shape = this.shapes.find(s => s.id === this.selectedShapeId);
-    if (shape && shape.type !== "line" && shape.type !== "arrow" && shape.type !== "text") {
+    if (shape && shape.type !== "line" && shape.type !== "arrow") {
       shape.bgFill = color;
       this.saveShapes();
       this.render();
@@ -895,6 +960,65 @@ export class CanvasEngine {
     }
   }
 
+  public updateSelectedTextFontFamily(fontFamily: FontFamily) {
+    if (!this.selectedShapeId) return;
+    
+    const shape = this.shapes.find(s => s.id === this.selectedShapeId);
+    if (shape && shape.type === "text") {
+      shape.fontFamily = fontFamily;
+      
+      // Recalculate text dimensions with new font
+      const actualFontSize = FONT_SIZE_MAP[shape.fontSize];
+      const actualFontFamily = FONT_FAMILY_MAP[fontFamily];
+      this.ctx.font = `${actualFontSize}px ${actualFontFamily}`;
+      const textMetrics = this.ctx.measureText(shape.text);
+      shape.width = textMetrics.width + 10;
+      
+      this.saveShapes();
+      this.render();
+      if (this.onSelectionChange) {
+        this.onSelectionChange(deepCloneShape(shape));
+      }
+    }
+  }
+
+  public updateSelectedTextFontSize(fontSize: FontSize) {
+    if (!this.selectedShapeId) return;
+    
+    const shape = this.shapes.find(s => s.id === this.selectedShapeId);
+    if (shape && shape.type === "text") {
+      shape.fontSize = fontSize;
+      
+      // Recalculate text dimensions with new font size
+      const actualFontSize = FONT_SIZE_MAP[fontSize];
+      const actualFontFamily = FONT_FAMILY_MAP[shape.fontFamily];
+      this.ctx.font = `${actualFontSize}px ${actualFontFamily}`;
+      const textMetrics = this.ctx.measureText(shape.text);
+      shape.width = textMetrics.width + 10;
+      shape.height = actualFontSize * 1.2;
+      
+      this.saveShapes();
+      this.render();
+      if (this.onSelectionChange) {
+        this.onSelectionChange(deepCloneShape(shape));
+      }
+    }
+  }
+
+  public updateSelectedTextAlign(textAlign: TextAlign) {
+    if (!this.selectedShapeId) return;
+    
+    const shape = this.shapes.find(s => s.id === this.selectedShapeId);
+    if (shape && shape.type === "text") {
+      shape.textAlign = textAlign;
+      this.saveShapes();
+      this.render();
+      if (this.onSelectionChange) {
+        this.onSelectionChange(deepCloneShape(shape));
+      }
+    }
+  }
+
   public copySelectedShape(): boolean {
     if (!this.selectedShapeId) return false;
     
@@ -943,12 +1067,15 @@ export class CanvasEngine {
     // Create textarea instead of input for better text editing
     const textarea = document.createElement("textarea");
     
-    // Style the textarea
+    // Style the textarea with current text settings
+    const actualFontSize = FONT_SIZE_MAP[this.fontSize];
+    const actualFontFamily = FONT_FAMILY_MAP[this.fontFamily];
+    
     textarea.style.position = "absolute";
     textarea.style.left = `${screenX}px`;
     textarea.style.top = `${screenY}px`;
-    textarea.style.fontSize = "20px";
-    textarea.style.fontFamily = "Arial, sans-serif";
+    textarea.style.fontSize = `${actualFontSize}px`;
+    textarea.style.fontFamily = actualFontFamily;
     textarea.style.border = "2px solid #3b82f6";
     textarea.style.borderRadius = "6px";
     textarea.style.padding = "8px";
@@ -956,10 +1083,12 @@ export class CanvasEngine {
     textarea.style.minWidth = "200px";
     textarea.style.minHeight = "40px";
     textarea.style.backgroundColor = "white";
-    textarea.style.color = "#000";
+    textarea.style.color = this.strokeFill;
     textarea.style.zIndex = "10000";
     textarea.style.resize = "none";
     textarea.style.overflow = "hidden";
+    textarea.style.textAlign = this.textAlign;
+    textarea.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
     textarea.placeholder = "Type your text here...";
     
     // Prevent all mouse/touch events from reaching the canvas
@@ -977,8 +1106,8 @@ export class CanvasEngine {
     textarea.addEventListener("touchmove", stopPropagation, true);
     textarea.addEventListener("touchend", stopPropagation, true);
 
-    // Add to DOM and focus
-    this.canvas.parentElement?.appendChild(textarea);
+    // Add to DOM - append to document body for proper z-index stacking
+    document.body.appendChild(textarea);
     this.activeTextInput = textarea;
     
     // Focus with a small delay to ensure it's rendered
@@ -996,25 +1125,38 @@ export class CanvasEngine {
       const text = textarea.value.trim();
       
       if (text) {
+        // Measure text dimensions
+        const actualFontSize = FONT_SIZE_MAP[this.fontSize];
+        const actualFontFamily = FONT_FAMILY_MAP[this.fontFamily];
+        this.ctx.font = `${actualFontSize}px ${actualFontFamily}`;
+        const textMetrics = this.ctx.measureText(text);
+        const textWidth = textMetrics.width;
+        const textHeight = actualFontSize * 1.2; // Line height
+        
         // Create text shape at canvas coordinates
         const textShape: Shape = {
           id: uuidv4(),
           type: "text",
           x: canvasX,
           y: canvasY,
-          width: 200,
-          height: 30,
+          width: textWidth + 10,
+          height: textHeight,
           text: text,
-          fontSize: 20,
-          fontFamily: "Arial, sans-serif",
+          fontSize: this.fontSize,
+          fontFamily: this.fontFamily,
+          textAlign: this.textAlign,
           strokeWidth: this.strokeWidth,
           strokeFill: this.strokeFill,
+          bgFill: this.bgFill,
           strokeStyle: this.strokeStyle,
           opacity: 100,
         } as Shape;
         
         // Add shape to canvas
         this.shapes.push(textShape);
+        
+        // Save to undo/redo stack
+        this.undoRedoManager.saveState([...this.shapes.map(deepCloneShape)]);
         
         // Auto-select the newly created text
         this.selectedShapeId = textShape.id;
@@ -1033,8 +1175,7 @@ export class CanvasEngine {
       }
       this.activeTextInput = null;
       
-      // Force immediate render after cleanup since we were blocking renders
-      this.renderScheduled = false;
+      // Force render after text input is complete
       this.render();
     };
 
@@ -1060,9 +1201,7 @@ export class CanvasEngine {
           textarea.remove();
         }
         this.activeTextInput = null;
-        requestAnimationFrame(() => {
-          this.render();
-        });
+        this.render();
       }
       // Shift+Enter allows multi-line text
     });
@@ -1084,8 +1223,8 @@ export class CanvasEngine {
       const minY = Math.min(shape.y, shape.toY);
       return { x: minX, y: minY, width: Math.abs(shape.toX - shape.x), height: Math.abs(shape.toY - shape.y) };
     } else if (shape.type === "text") {
-      // For text, shape.y is at the baseline (bottom), so we need to adjust
-      return { x: shape.x, y: shape.y - (shape.height || 30), width: shape.width || 100, height: shape.height || 30 };
+      // Text is rendered with textBaseline: "top", so y is the top of the text
+      return { x: shape.x, y: shape.y, width: shape.width, height: shape.height };
     }
     return { x: 0, y: 0, width: 0, height: 0 };
   }
@@ -1259,7 +1398,7 @@ export class CanvasEngine {
 
   private loadShapes() {
     const loaded = loadFromLocalStorage<Shape[]>(LOCALSTORAGE_CANVAS_KEY);
-    if (loaded) {
+    if (loaded && loaded.length > 0) {
       this.shapes = loaded;
       this.notifyShapeCountChange();
       this.undoRedoManager.initialize(this.shapes);

@@ -225,7 +225,16 @@ export class CanvasEngine {
           this.isDraggingShape = true;
           this.dragStartX = this.startX;
           this.dragStartY = this.startY;
-          this.shapeOriginalPos = { x: clickedShape.x, y: clickedShape.y };
+          
+          if (clickedShape.type === "line" || clickedShape.type === "arrow") {
+            this.shapeOriginalPos = { x: clickedShape.x, y: clickedShape.y };
+          } else if (clickedShape.type === "free-draw") {
+            if (clickedShape.points.length > 0) {
+              this.shapeOriginalPos = { x: clickedShape.points[0].x, y: clickedShape.points[0].y };
+            }
+          } else {
+            this.shapeOriginalPos = { x: clickedShape.x, y: clickedShape.y };
+          }
           this.render();
           return;
         }
